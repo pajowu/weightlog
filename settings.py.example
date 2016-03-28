@@ -1,0 +1,3 @@
+password = "g3h31m"
+height = 1.70
+plot_kwargs = {"target_bmi":21, "long_dates":False, "xkcd": False}
