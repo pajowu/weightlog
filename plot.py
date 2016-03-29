@@ -20,10 +20,12 @@ def plot(weights, height=1.92, xkcd=False, target_bmi=None, long_dates=False, pl
     plt.plot(time_points,weight_points,'o',xnew, f2(xnew),'--')
     if long_dates:
         labels = [datetime.datetime.fromtimestamp(int(time)).strftime('%d.%m.%Y %H:%M') for time in time_points]
+        rot = 90
     else:
         labels = [datetime.datetime.fromtimestamp(int(time)).strftime('%d.%m.') for time in time_points]
+        rot = 90
     
-    plt.xticks(time_points, labels, rotation=90)
+    plt.xticks(time_points, labels, rotation=rot)
 
     plt.scatter(x, y)
     ax = plt.gca()
@@ -37,13 +39,13 @@ def plot(weights, height=1.92, xkcd=False, target_bmi=None, long_dates=False, pl
 
     ax.set_ylabel("Weight (kg)",fontsize=14,color='blue')
     ax2.set_ylabel("BMI",fontsize=14,color='blue')
-    
     wmin, wmax = ax.get_ylim()
     bmin = wmin/(height**2)
     bmax = wmax/(height**2)
     ax2.set_ylim(ymin=bmin, ymax=bmax)
-
-    minor_ticks = np.arange(math.floor(bmin), bmax+1, .25)
+    step_size = 0.25
+    st = math.ceil(bmin/step_size) * 0.25
+    minor_ticks = np.arange(st, bmax, step_size)
     ax2.set_yticks(minor_ticks, minor=True)
     ax2.grid(which='minor', alpha=0.5) 
 
@@ -51,4 +53,6 @@ def plot(weights, height=1.92, xkcd=False, target_bmi=None, long_dates=False, pl
     if plot:
         plt.show()
     if save:
-        plt.savefig(outfile)
+        plt.savefig(outfile, bbox_inches='tight')
+    # close plot so we can draw multiple plots without reimportint pyplot
+    plt.close()

@@ -23,6 +23,7 @@ group_options.add_argument('--password', type=str, dest="password",
 
 
 group_commands = parser.add_argument_group('commands', "multiple commands can be executed at once.")
+group_commands.add_argument('--random', dest="gen_random", help='generate random weights and use them in current session', action='store_true')
 group_commands.add_argument('--edit', dest="manual_edit", help='open pdb after loading weight, saves weight log afterwards', action='store_true')
 group_commands.add_argument('--add', dest="add_weight", help='add weight to weight log', action='store_true')
 group_commands.add_argument('--print', dest="print_weight", help='print weight log', action='store_true')
@@ -52,7 +53,26 @@ if not args.password:
 else:
 	password = args.password
 
-weights = load_weights(args.weightfile, password)
+if not args.gen_random:
+	weights = load_weights(args.weightfile, password)
+else:
+	import random
+	now_time = time.time()
+	steps = 30
+	weight = 80
+	weights = []
+	for i in range(steps):
+		time_diff = random.randint(150000,500000)
+		weight_diff = random.uniform(-0.4,0.4)
+		weight -= weight_diff
+		now_time -= time_diff
+		weight_data = {"time":now_time, "weight":weight}
+		weights.append(weight_data)
+	weights.sort(key=lambda x: x['time'])
+	plot(weights, height=1.8, plot=False, save=True, outfile="example.png", target_bmi=21, long_dates=False, xkcd=False)
+	plot(weights, height=1.8, plot=False, save=True, outfile="example_longdates.png", target_bmi=21, long_dates=True, xkcd=False)
+	plot(weights, height=1.8, plot=False, save=True, outfile="example_xkcd.png", target_bmi=21, long_dates=False, xkcd=True)
+	plot(weights, height=1.8, plot=False, save=True, outfile="example_longdates_xkcd.png", target_bmi=21, long_dates=True, xkcd=True)
 
 if args.manual_edit:
 	import pdb;pdb.set_trace()
@@ -90,3 +110,4 @@ if args.plot_weight or args.save_weight:
 		plot_kwargs = {}
 
 	plot(weights, height, plot=args.plot_weight, save=args.save_weight, outfile=args.outfile, **plot_kwargs)
+
