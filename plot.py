@@ -1,55 +1,60 @@
-
+import matplotlib.dates as md
 import numpy as np
 import matplotlib.pyplot as plt
 from functions import *
 import datetime
 from scipy.interpolate import *
 import math
-def plot(weights, height=1.92, xkcd=False, target_bmi=None, long_dates=False, plot=True, save=False, outfile="out.png"):
+def plot(weights, height=1.92, xkcd=False, target_bmi=None, long_dates=False, plot=True, save=False, outfile="out.png", show_bmi_steps=True):
     if xkcd:
         plt.xkcd()
-    time_points = [w['time'] for w in weights]
-    weight_points = [w['weight'] for w in weights]
-    x = time_points
-    y = weight_points
-    #f2 = interp1d(time_points, weight_points, kind='linear')
-    f2 = PchipInterpolator(time_points, weight_points)
-    #f2 = Akima1DInterpolator(time_points, weight_points)
-    #f2 = UnivariateSpline(time_points, weight_points)
-    xnew = np.linspace(min(time_points), max(time_points), 100)
-    plt.plot(time_points,weight_points,'o',xnew, f2(xnew),'--')
-    if long_dates:
-        labels = [datetime.datetime.fromtimestamp(int(time)).strftime('%d.%m.%Y %H:%M') for time in time_points]
-        rot = 90
-    else:
-        labels = [datetime.datetime.fromtimestamp(int(time)).strftime('%d.%m.') for time in time_points]
-        rot = 90
-    
-    plt.xticks(time_points, labels, rotation=rot)
 
-    plt.scatter(x, y)
-    ax = plt.gca()
+    timestamps = [w['time'] for w in weights]
+    weight_points = [w['weight'] for w in weights]
+
+    dates=[datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+
+    ax=plt.gca()
+    xfmt = md.DateFormatter('%d.%m.')
+    ax.xaxis.set_major_formatter(xfmt)
+    plt.scatter(dates,weight_points, zorder=2)
+
+    x_sm = np.array(timestamps)
+    y_sm = np.array(weight_points)
+
+    seconds_diff = max(timestamps) - min(timestamps)
+    num_steps = seconds_diff / 60 / 60 / 24 / 28 # one step every four weeks
+
+    x_smooth = np.linspace(x_sm.min(), x_sm.max(), num_steps)
+    y_smooth = interp1d(timestamps, weight_points, kind='linear')
+
+    x_smooth_dates = [datetime.datetime.fromtimestamp(ts) for ts in x_smooth]
+    plt.plot(x_smooth_dates, y_smooth(x_smooth), 'red', linewidth=1, zorder=1)
 
     if target_bmi:
         ax.add_line(plt.axhline(target_bmi*(height**2)))
-    ax2 = ax.twinx()
-    ax2.tick_params(which = 'both', direction = 'out')
-    
+
     plt.axis('normal')
 
-    ax.set_ylabel("Weight (kg)",fontsize=14,color='blue')
-    ax2.set_ylabel("BMI",fontsize=14,color='blue')
-    wmin, wmax = ax.get_ylim()
-    bmin = wmin/(height**2)
-    bmax = wmax/(height**2)
-    ax2.set_ylim(ymin=bmin, ymax=bmax)
-    step_size = 0.25
-    st = math.ceil(bmin/step_size) * 0.25
-    minor_ticks = np.arange(st, bmax, step_size)
-    ax2.set_yticks(minor_ticks, minor=True)
-    ax2.grid(which='minor', alpha=0.5) 
-
+    ax.set_ylabel("Weight (kg)",fontsize=14,color='black')
     ax.set_xlabel('Time', fontsize=14, color='b')
+
+    if show_bmi_steps:
+        ax2 = ax.twinx()
+        ax2.tick_params(which = 'both', direction = 'out')
+        ax2.set_ylabel("BMI",fontsize=14,color='black')
+        wmin, wmax = ax.get_ylim()
+        bmin = wmin/(height**2)
+        bmax = wmax/(height**2)
+        ax2.set_ylim(ymin=bmin, ymax=bmax)
+        step_size = 0.5
+        st = math.ceil(bmin/step_size) * 0.5
+        minor_ticks = np.arange(st, bmax, step_size)
+        ax2.set_yticks(minor_ticks, minor=True)
+        ax2.grid(which='minor', alpha=0.5)
+        ax2.grid(which='major', alpha=0.75)
+
+
     if plot:
         plt.show()
     if save:
