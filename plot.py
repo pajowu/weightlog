@@ -15,7 +15,8 @@ def plot(weights, height=1.92, xkcd=False, target_bmi=None, long_dates=False, pl
     dates=[datetime.datetime.fromtimestamp(ts) for ts in timestamps]
 
     ax=plt.gca()
-    xfmt = md.DateFormatter('%d.%m.')
+    date_format = "%d.%m.%Y" if long_dates else "%d.%m."
+    xfmt = md.DateFormatter(date_format)
     ax.xaxis.set_major_formatter(xfmt)
     plt.scatter(dates,weight_points, zorder=2)
 
